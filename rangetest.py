@@ -1,3 +1,5 @@
+# pylint: disable-all
+
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -25,35 +27,26 @@ def show():
 
             st.sidebar.subheader('Rangetest Data')
 
-            min_distance = st.sidebar.slider(
-                'Minimum distance (km)', 0, 150, 0, 1)
+            min_distance = st.sidebar.slider('Minimum distance (km)', 0, 150, 0, 1)
             data = data[data['distance'] > min_distance * 1000]
 
             hop_limit = sorted(data['hop limit'].unique())
-            selected_hop_limit = st.sidebar.multiselect(
-                'Select hop limit', hop_limit)
-            if selected_hop_limit:
-                data = data[data['hop limit'].isin(selected_hop_limit)]
+            selected_hop_limit = st.sidebar.multiselect('Select hop limit', hop_limit)
+            if selected_hop_limit:data = data[data['hop limit'].isin(selected_hop_limit)]
 
             sender_names = sorted(data['sender name'].unique())
-            selected_senders = st.sidebar.multiselect(
-                'Select senders', sender_names)
+            selected_senders = st.sidebar.multiselect('Select senders', sender_names)
             if selected_senders:
                 data = data[data['sender name'].isin(selected_senders)]
 
-            data['max distance'] = data.groupby(
-                'sender name')['distance'].transform('max')
-            data['sender count'] = data.groupby(
-                'sender name')['sender name'].transform('count')
+            data['max distance'] = data.groupby('sender name')['distance'].transform('max')
+            data['sender count'] = data.groupby('sender name')['sender name'].transform('count')
 
             st.sidebar.subheader("Best senders")
-            st.sidebar.write(f"Longest distance: {
-                             data['distance'].max()/1000:.2f} km")
-            st.sidebar.write(f"Most seen sender: {
-                             data['sender name'].mode()[0]}")
+            st.sidebar.write(f"Longest distance: {data['distance'].max()/1000:.2f} km")
+            st.sidebar.write(f"Most seen sender: {data['sender name'].mode()[0]}")
 
-            m = folium.Map(location=[data['sender lat'].mean(
-            ), data['sender long'].mean()], zoom_start=10)
+            m = folium.Map(location=[data['sender lat'].mean(), data['sender long'].mean()], zoom_start=10)
 
             drawn_sender = []
             col_indx = 0
@@ -63,14 +56,17 @@ def show():
                     drawn_sender.append(row['sender name'])
                     sender = row['sender name']
 
-                    html = f"<b>{
-                        sender}</b> <p>Max: {row['max distance']/1000} km<br>Count: {int(row['sender count'])}</p>"
+                    html = f"<b>{sender}</b> <p>Max: {row['max distance']/1000} km<br>Count: {int(row['sender count'])}</p>"
                     putext = folium.IFrame(html)
                     pu = folium.Popup(putext,
                                       min_width=200,
                                       max_width=300)
                     folium.Marker(
-                        [row['sender lat'], row['sender long']], popup=pu, tooltip=row['sender name'], icon=folium.Icon(
+                        [row['sender lat'], 
+                         row['sender long']], 
+                         popup=pu, 
+                         tooltip=row['sender name'], 
+                         icon=folium.Icon(
                             color=colors[col_indx])
                     ).add_to(m)
 
